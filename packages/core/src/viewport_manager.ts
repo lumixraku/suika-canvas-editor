@@ -12,7 +12,7 @@ export class ViewportManager {
   private scrollY = 0;
   private eventEmitter = new EventEmitter<Events>();
 
-  constructor(private editor: Editor) {}
+  constructor(private editor: Editor) { }
   getViewport(): IRect {
     return {
       x: this.scrollX,
@@ -34,10 +34,14 @@ export class ViewportManager {
     if (width !== undefined) {
       this.editor.canvasElement.width = width * dpr;
       this.editor.canvasElement.style.width = width + 'px';
+      this.editor.skCanvasElem.width = width * dpr;
+      this.editor.skCanvasElem.style.width = width + 'px';
     }
     if (height !== undefined) {
       this.editor.canvasElement.height = height * dpr;
       this.editor.canvasElement.style.height = height + 'px';
+      this.editor.skCanvasElem.height = height * dpr;
+      this.editor.skCanvasElem.style.height = height + 'px';
     }
 
     if (prevX !== x || prevY !== y) {

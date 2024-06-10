@@ -3,6 +3,12 @@ import {
   sceneCoordsToViewportUtil,
   viewportCoordsToSceneUtil,
 } from '@suika/common';
+// import CanvasKitInit, { type CanvasKit, type EmulatedCanvas2D, type Surface } from 'canvaskit-wasm/bin/profiling/canvaskit.js';
+import CanvasKitInit, {
+  type CanvasKit,
+  type EmulatedCanvas2D,
+  type Surface,
+} from 'canvaskit-wasm';
 
 import { CanvasDragger } from './canvas_dragger';
 import { ClipboardManager } from './clipboard';
@@ -27,7 +33,6 @@ import { ToolManager } from './tools';
 import { type IEditorPaperData } from './type';
 import { ViewportManager } from './viewport_manager';
 import { ZoomManager } from './zoom_manager';
-
 interface IEditorOptions {
   containerElement: HTMLDivElement;
   width: number;
@@ -41,6 +46,11 @@ export class Editor {
   containerElement: HTMLDivElement;
   canvasElement: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
+
+  declare CanvasKit: CanvasKit;
+  declare skcanvas: EmulatedCanvas2D;
+  skCanvasElem: HTMLCanvasElement;
+  declare surface: Surface;
 
   appVersion = 'suika-editor_0.0.1';
   paperId: string;
@@ -79,6 +89,44 @@ export class Editor {
     this.canvasElement = document.createElement('canvas');
     this.containerElement.appendChild(this.canvasElement);
     this.ctx = this.canvasElement.getContext('2d')!;
+
+
+    this.skCanvasElem = document.createElement('canvas');
+    this.skCanvasElem.classList.add(
+      'skia-canvas',
+      'absolute',
+      'lefttop',
+    );
+
+    this.containerElement.appendChild(this.skCanvasElem);
+
+    CanvasKitInit({
+      locateFile: (file: any) => '/canvaskit/' + file,
+    }).then((CanvasKit) => {
+      // Code goes here using CanvasKit
+      this.CanvasKit = CanvasKit;
+      const skcanvas = (this.skcanvas = CanvasKit.MakeCanvas(
+        options.width,
+        options.height,
+      ));
+
+      const ctx = skcanvas.getContext('2d')!;
+      const rgradient = ctx.createRadialGradient(200, 300, 10, 100, 100, 300);
+
+      // Add three color stops
+      rgradient.addColorStop(0, 'red');
+      rgradient.addColorStop(0.7, 'white');
+      rgradient.addColorStop(1, 'blue');
+
+      ctx.fillStyle = rgradient;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(0, 0, 600, 600);
+
+      const imgData = skcanvas.toDataURL();
+
+      this.surface = CanvasKit.MakeWebGLCanvasSurface(this.skCanvasElem)!;
+      console.log('imgData', imgData);
+    });
 
     this.setting = new Setting();
     if (options.offsetX) {
@@ -167,6 +215,7 @@ export class Editor {
   }
   destroy() {
     this.containerElement.removeChild(this.canvasElement);
+    this.containerElement.removeChild(this.skCanvasElem);
     this.textEditor.destroy();
     this.keybindingManager.destroy();
     this.hostEventManager.destroy();
@@ -207,14 +256,14 @@ export class Editor {
     return size * zoom;
   }
   /** get cursor viewport xy */
-  getCursorXY(event: { clientX: number; clientY: number }) {
+  getCursorXY(event: { clientX: number; clientY: number; }) {
     return {
       x: event.clientX - this.setting.get('offsetX'),
       y: event.clientY - this.setting.get('offsetY'),
     };
   }
   /** get cursor scene xy */
-  getSceneCursorXY(event: { clientX: number; clientY: number }, round = false) {
+  getSceneCursorXY(event: { clientX: number; clientY: number; }, round = false) {
     const { x, y } = this.getCursorXY(event);
     return this.viewportCoordsToScene(x, y, round);
   }

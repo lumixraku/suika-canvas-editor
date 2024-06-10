@@ -60,9 +60,13 @@ const Editor: FC = () => {
         <div className="body">
           <LayerPanel />
           <div
+            className="canvas-container"
             ref={containerRef}
             style={{ position: 'absolute', left: 240, top: 0 }}
-          />
+          >
+
+            <canvas className="skia-canvas absolute left-0 top-0" />
+          </div>
           <InfoPanel />
           <ContextMenu />
         </div>

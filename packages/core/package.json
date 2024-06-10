@@ -13,7 +13,9 @@
   "dependencies": {
     "@suika/common": "workspace:^",
     "@suika/geo": "workspace:^",
+    "autoprefixer": "^10.4.19",
     "bezier-js": "^6.1.4",
+    "canvaskit-wasm": "^0.39.1",
     "stats.js": "^0.17.0"
   },
   "devDependencies": {
